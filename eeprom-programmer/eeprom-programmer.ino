@@ -6,15 +6,21 @@
 #define WRITE_EN 13
 
 /*
+ * Triggers a clock pulse for the shift register output clock signal
+ */
+void latch(){
+  digitalWrite(SHIFT_LATCH, !digitalRead(SHIFT_LATCH));
+  digitalWrite(SHIFT_LATCH, !digitalRead(SHIFT_LATCH));
+}
+
+
+/*
  * Output the address bits and outputEnable signal using shift registers.
  */
 void setAddress(int address, bool outputEnable) {
-  shiftOut(SHIFT_DATA, SHIFT_CLK, MSBFIRST, (address >> 8) | (outputEnable ? 0x00 : 0x80));
+  shiftOut(SHIFT_DATA, SHIFT_CLK, MSBFIRST, (address >> 8) | (outputEnable ? 0 : 128));
   shiftOut(SHIFT_DATA, SHIFT_CLK, MSBFIRST, address);
-
-  digitalWrite(SHIFT_LATCH, LOW);
-  digitalWrite(SHIFT_LATCH, HIGH);
-  digitalWrite(SHIFT_LATCH, LOW);
+  latch();
 }
 
 
@@ -22,7 +28,7 @@ void setAddress(int address, bool outputEnable) {
  * Read a byte from the EEPROM at the specified address.
  */
 byte readEEPROM(int address) {
-  for (int pin = EEPROM_D0; pin <= EEPROM_D7; pin += 1) {
+  for (int pin = EEPROM_D0; pin < pin + 8; pin++) {
     pinMode(pin, INPUT);
   }
   setAddress(address, /*outputEnable*/ true);
@@ -36,23 +42,39 @@ byte readEEPROM(int address) {
 
 
 /*
- * Write a byte to the EEPROM at the specified address.
+ * One Write cycle of a byte into the EEPROM at the specified address.
  */
 void writeEEPROM(int address, byte data) {
-  setAddress(address, /*outputEnable*/ false);
-  for (int pin = EEPROM_D0; pin <= EEPROM_D7; pin += 1) {
-    pinMode(pin, OUTPUT);
-  }
+    setAddress(address, /*outputEnable*/ false);
 
-  for (int pin = EEPROM_D0; pin <= EEPROM_D7; pin += 1) {
-    digitalWrite(pin, data & 1);
-    data = data >> 1;
-  }
-  digitalWrite(WRITE_EN, LOW);
-  delayMicroseconds(1);
-  digitalWrite(WRITE_EN, HIGH);
-  delay(10);
+    for (int pin = EEPROM_D0; pin < pin + 8; pin++) {
+        pinMode(pin, OUTPUT);
+    }
+
+    // keep track of msb for polling write completion
+    byte msb = data & 128;
+
+    // write our byte
+    for (int pin = EEPROM_D0; pin < pin + 8; pin++) {
+        digitalWrite(pin, data & 1);
+        data = data >> 1;
+    }
+
+    // toggle write enable pin
+    digitalWrite(WRITE_ENABLE, LOW);
+    delayMicroseconds(1);
+    digitalWrite(WRITE_ENABLE, HIGH);
+
+    // at this point a write should be in progress...
+
+    // remove arbitrary delay(10) and poll for completion to end the write cycle
+    byte pollBusy = readEEPROM(address) & 128;
+    while (pollBusy != msb) {
+        delay(2); //still an arbitrary pause to cut the EEPROM polling some slack...
+        pollBusy = readEEPROM(address) & 128;
+    }
 }
+
 
 
 /*
@@ -61,7 +83,7 @@ void writeEEPROM(int address, byte data) {
 void printContents() {
   for (int base = 0; base <= 255; base += 16) {
     byte data[16];
-    for (int offset = 0; offset <= 15; offset += 1) {
+    for (int offset = 0; offset <= 15; offset++) {
       data[offset] = readEEPROM(base + offset);
     }
 
@@ -93,7 +115,7 @@ void setup() {
 
   // Erase entire EEPROM
   Serial.print("Erasing EEPROM");
-  for (int address = 0; address <= 2047; address += 1) {
+  for (int address = 0; address <= 2047; address++) {
     writeEEPROM(address, 0xff);
 
     if (address % 64 == 0) {
@@ -105,7 +127,7 @@ void setup() {
 
   // Program data bytes
   Serial.print("Programming EEPROM");
-  for (int address = 0; address < sizeof(data); address += 1) {
+  for (int address = 0; address < sizeof(data); address++) {
     writeEEPROM(address, data[address]);
 
     if (address % 64 == 0) {
