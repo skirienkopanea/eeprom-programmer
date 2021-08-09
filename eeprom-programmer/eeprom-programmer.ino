@@ -72,7 +72,7 @@ void writeEEPROM(int address, byte data) {
     setAddress(address, /*outputEnable*/ false);
 
     //Setting our D5 to D12 pins (their names offseted to start at D0) as outputs
-    for (int pin = EEPROM_D0; pin < EEPROM_D7; pin++) {
+    for (int pin = EEPROM_D0; pin <= EEPROM_D7; pin++) {
         pinMode(pin, OUTPUT);
     }
 
@@ -80,7 +80,7 @@ void writeEEPROM(int address, byte data) {
     byte msb = data & 128;
 
     // write our byte starting from the least significant bit, (then shifting the given data to be written once to the right such that next least significant bits are the ones stored
-    for (int pin = EEPROM_D0; pin < EEPROM_D7; pin++) {
+    for (int pin = EEPROM_D0; pin <= EEPROM_D7; pin++) {
         digitalWrite(pin, data & 1);
         data = data >> 1;
     }
