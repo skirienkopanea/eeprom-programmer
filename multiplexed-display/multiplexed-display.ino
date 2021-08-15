@@ -86,7 +86,7 @@ void setup() {
   pinMode(SHIFT_LATCH, OUTPUT);
   digitalWrite(WRITE_EN, HIGH);
   pinMode(WRITE_EN, OUTPUT);
-  Serial.begin(57600);
+  Serial.begin(4800);
 
 
   // Bit patterns for the digits 0..9
