@@ -1,10 +1,12 @@
+/* This code contains the read and write methods for the EEPROM and a 7-segment cathode data array for 1 digit example */
+
 //Constants
 #define SHIFT_DATA 2
 #define SHIFT_CLK 3
 #define SHIFT_LATCH 4
 #define EEPROM_D0 5
 #define EEPROM_D7 12
-#define WRITE_ENABLE 13
+#define EEPROM_WE 13
 
 
 /**
@@ -45,22 +47,14 @@ byte readEEPROM(int address){
 }
 
 /**
- * Read the contents of the EEPROM and print them to the serial monitor.
+ * Read the contents of the EEPROM from a to b addresses and print them to the serial monitor.
  */
-void printContents() {
+void printContents(int a, int b) {
   Serial.println("Reading EEPROM");
-  for (int base = 0; base <= 255; base += 16) {
-    byte data[16];
-    for (int offset = 0; offset <= 15; offset++) {
-      data[offset] = readEEPROM(base + offset);
-    }
-
-    char buf[80];
-    sprintf(buf, "%03x:  %02x %02x %02x %02x %02x %02x %02x %02x   %02x %02x %02x %02x %02x %02x %02x %02x",
-            base, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
-            data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]);
-
-    Serial.println(buf);
+  char buffer[80];
+  for (int i = a; i <= b; i++) {
+  sprintf(buffer, "%d: %02x", i, readEEPROM(i));
+  Serial.println(buffer);
   }
 }
 
@@ -71,7 +65,7 @@ void writeEEPROM(int address, byte data) {
   //Not only set addres, but also disable EEPROM from driving the BUS (and setting it's I/O pins as I)
     setAddress(address, /*outputEnable*/ false);
 
-    //Setting our D5 to D12 pins (their names offseted to start at D0) as outputs
+    //Setting our nano D5 to D12 pins (which are connected to D0 and D7 of the EEPROM) as outputs
     for (int pin = EEPROM_D0; pin <= EEPROM_D7; pin++) {
         pinMode(pin, OUTPUT);
     }
@@ -86,31 +80,28 @@ void writeEEPROM(int address, byte data) {
     }
 
     // toggle write enable pin
-    digitalWrite(WRITE_ENABLE, LOW);
+    digitalWrite(EEPROM_WE, LOW);
     delayMicroseconds(1); //right at the maximum write pulse width value because arduino cant go lower
-    digitalWrite(WRITE_ENABLE, HIGH);
+    digitalWrite(EEPROM_WE, HIGH);
 
     // at this point a write should be in progress...
-    delay(10);
-    // I ended up corrupting the most significant bit of almost all addresses so I think I'd rather implement the poorman's version with a non-malicious delay(10) rather than burning the chip with constant data polling for the MSB bit. The purists can find the data polling implementation below.
-    // Luckily that bit can be ignored by the 7 segment display...
-    /*
+    delay(1); //we're replacing the arbitrary write cycle delay with the MSB poll feature, but you have to give time to the MSB to get updated
+
     byte pollBusy = readEEPROM(address) & 128;
     while (pollBusy != msb) {
-        delay(1);
         pollBusy = readEEPROM(address) & 128;
-    }*/
+        delay(1);
+    }
 }
 
 
 /**
- * Erases entire EEPROM with 0xff
+ * Erases entire EEPROM with 0s (then in case I make wrong assembly code I know for sure that all control signals will be low and the computer BUS won't be driven by multiple parties)
  */
 void deleteAll(){
   Serial.print("Erasing EEPROM");
   for (int address = 0; address <= 2047; address++) {
-    writeEEPROM(address, 0xff);
-
+    writeEEPROM(address, 0);
     if (address % 64 == 0) {
       Serial.print(".");
     }
@@ -119,19 +110,37 @@ void deleteAll(){
 }
 
 //4-bit hex decoder for a common cathode 7-segment display
-byte data[] = { 0x7e, 0x30, 0x6d, 0x79, 0x33, 0x5b, 0x5f, 0x70, 0x7f, 0x7b, 0x77, 0x1f, 0x4e, 0x3d, 0x4f, 0x47 };
+byte data[] = {
+  0x7e, //0b01111110 = display 0 at EEPROM address 0
+  0x30, //0b00110000 = display 1 at EEPROM address 1
+  0x6d, //0b01101101 = display 2 at EEPROM address 2
+  0x79, //0b01111001 = display 3 at EEPROM address 3
+  0x33, //0b00110011 = display 4 at EEPROM address 4
+  0x5b, //0b01011011 = display 5 at EEPROM address 5
+  0x5f, //0b01011111 = display 6 at EEPROM address 6
+  0x70, //0b01110000 = display 7 at EEPROM address 7
+  0x7f, //0b01111111 = display 8 at EEPROM address 8
+  0x7b, //0b01111011 = display 9 at EEPROM address 9
+  0x77, //0b01110111 = display A at EEPROM address 10
+  0x1f, //0b00b11111 = display b at EEPROM address 11
+  0x4e, //0b01001110 = display C at EEPROM address 12
+  0x3d, //0b00111101 = display d at EEPROM address 13
+  0x4f, //0b01001111 = display E at EEPROM address 14
+  0x47  //0b01000111 = display F at EEPROM address 15
+  };
 
 /**
  * Program data bytes
  */
 void program(){
   Serial.print("Programming EEPROM");
-  for (int address = 0; address < sizeof(data); address += 1) {
+  for (int address = 0; address < sizeof(data); address++) {
     writeEEPROM(address, data[address]);
 
     if (address % 64 == 0) {
       Serial.print(".");
     }
+
   }
   Serial.println(" done");
 }
@@ -139,21 +148,21 @@ void program(){
 
 //Run only once
 void setup(){
-  //Set our constants (D2, D3 and D4) as output pins
+  //Set our shift register pins as outputs
   pinMode(SHIFT_DATA, OUTPUT);
   pinMode(SHIFT_CLK, OUTPUT);
   pinMode(SHIFT_LATCH, OUTPUT);
 
   //Set \\(\overline{WE}\\) default high, in the good practice arduino order: first the value, then the pinMode
-  //We want to avoid the WRITE_ENABLE pin being low by default as it could accidentally write data
-  digitalWrite(WRITE_ENABLE, HIGH);
-  pinMode(WRITE_ENABLE, OUTPUT);
+  //We want to avoid the EEPROM_WE pin being low by default as it could accidentally write data
+  digitalWrite(EEPROM_WE, HIGH);
+  pinMode(EEPROM_WE, OUTPUT);
 
-  Serial.begin(4800) ; //opens USB port and sends that many bits at that rate per seconds
+  Serial.begin(4800) ; //opens USB port and sends that many bits at that rate per seconds (to see/send stuff in the Monitor)
 
   deleteAll();
-  program();
-  printContents(); //print at arduino IDE!
+  //program();
+  printContents(0,2047); //print at arduino IDE!
  
 }
 
