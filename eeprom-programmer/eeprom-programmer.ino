@@ -51,9 +51,9 @@ byte readEEPROM(int address){
  */
 void printContents(int a, int b) {
   Serial.println("Reading EEPROM");
-  char buffer[80];
+  char buffer[20];
   for (int i = a; i <= b; i++) {
-  sprintf(buffer, "%d: %02x", i, readEEPROM(i));
+  sprintf(buffer, "%d: %02x", i, readEEPROM(i)); //1024: 0xFF
   Serial.println(buffer);
   }
 }
