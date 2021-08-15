@@ -53,7 +53,7 @@ void printContents(int a, int b) {
   Serial.println("Reading EEPROM");
   char buffer[20];
   for (int i = a; i <= b; i++) {
-  sprintf(buffer, "%d: %02x", i, readEEPROM(i)); //1024: 0xFF
+  sprintf(buffer, "%d: %02x", i, readEEPROM(i));
   Serial.println(buffer);
   }
 }
