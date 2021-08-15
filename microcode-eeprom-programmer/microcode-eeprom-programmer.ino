@@ -26,23 +26,25 @@
 #define J   0b0000000000000010  // Jump (program counter in)
 
 uint16_t data[] = { //unsigned 16 bit integer array
+// The sign "/" in the address comments means that we will store the 8 MSB with A7 = 0
+// and the 8 LSB bits when A7 = 1
 //T=000   001        010     011     100        101 110 111               xxx = T:000 to T:111
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 0000 xxx - NOP
-  MI|CO,  RO|II|CE,  IO|MI,  RO|AI,  0,         0, 0, 0,   // (0000) 0001 xxx - LDA
-  MI|CO,  RO|II|CE,  IO|MI,  RO|BI,  EO|AI,     0, 0, 0,   // (0000) 0010 xxx - ADD
-  MI|CO,  RO|II|CE,  IO|MI,  RO|BI,  EO|AI|SU,  0, 0, 0,   // (0000) 0011 xxx - SUB
-  MI|CO,  RO|II|CE,  IO|MI,  AO|RI,  0,         0, 0, 0,   // (0000) 0100 xxx - STA
-  MI|CO,  RO|II|CE,  IO|AI,  0,      0,         0, 0, 0,   // (0000) 0101 xxx - LDI
-  MI|CO,  RO|II|CE,  IO|J,   0,      0,         0, 0, 0,   // (0000) 0110 xxx - JMP
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 0111 xxx
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 1000 xxx
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 1001 xxx
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 1010 xxx
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 1011 xxx
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 1100 xxx
-  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (0000) 1101 xxx
-  MI|CO,  RO|II|CE,  AO|OI,  0,      0,         0, 0, 0,   // (0000) 1110 xxx - OUT
-  MI|CO,  RO|II|CE,  HLT,    0,      0,         0, 0, 0,   // (0000) 1111 xxx - HLT
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 0000 xxx - NOP
+  MI|CO,  RO|II|CE,  IO|MI,  RO|AI,  0,         0, 0, 0,   // (000/) 0001 xxx - LDA
+  MI|CO,  RO|II|CE,  IO|MI,  RO|BI,  EO|AI,     0, 0, 0,   // (000/) 0010 xxx - ADD
+  MI|CO,  RO|II|CE,  IO|MI,  RO|BI,  EO|AI|SU,  0, 0, 0,   // (000/) 0011 xxx - SUB
+  MI|CO,  RO|II|CE,  IO|MI,  AO|RI,  0,         0, 0, 0,   // (000/) 0100 xxx - STA
+  MI|CO,  RO|II|CE,  IO|AI,  0,      0,         0, 0, 0,   // (000/) 0101 xxx - LDI
+  MI|CO,  RO|II|CE,  IO|J,   0,      0,         0, 0, 0,   // (000/) 0110 xxx - JMP
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 0111 xxx - JC
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 1000 xxx - JZ
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 1001 xxx
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 1010 xxx
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 1011 xxx
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 1100 xxx
+  MI|CO,  RO|II|CE,  0,      0,      0,         0, 0, 0,   // (000/) 1101 xxx
+  MI|CO,  RO|II|CE,  AO|OI,  0,      0,         0, 0, 0,   // (000/) 1110 xxx - OUT
+  MI|CO,  RO|II|CE,  HLT,    0,      0,         0, 0, 0,   // (000/) 1111 xxx - HLT
 };
 
 
