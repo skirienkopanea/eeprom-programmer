@@ -35,7 +35,7 @@
 #define JC  0b0111
 #define JZ  0b1000
 
-uint16_t UCODE_TEMPLATE[16][8] = {
+const PROGMEM uint16_t UCODE_TEMPLATE[16][8] = {
   { MI|CO,  RO|II|CE,  0,      0,      0,           0, 0, 0 },   // 0000 - NOP
   { MI|CO,  RO|II|CE,  IO|MI,  RO|AI,  0,           0, 0, 0 },   // 0001 - LDA
   { MI|CO,  RO|II|CE,  IO|MI,  RO|BI,  EO|AI|FI,    0, 0, 0 },   // 0010 - ADD
@@ -58,18 +58,18 @@ uint16_t ucode[4][16][8];
 
 void initUCode() {
   // ZF = 0, CF = 0
-  memcpy(ucode[FLAGS_Z0C0], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
+  memcpy_P(ucode[FLAGS_Z0C0], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
 
   // ZF = 0, CF = 1
-  memcpy(ucode[FLAGS_Z0C1], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
+  memcpy_P(ucode[FLAGS_Z0C1], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
   ucode[FLAGS_Z0C1][JC][2] = IO|J;
 
   // ZF = 1, CF = 0
-  memcpy(ucode[FLAGS_Z1C0], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
+  memcpy_P(ucode[FLAGS_Z1C0], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
   ucode[FLAGS_Z1C0][JZ][2] = IO|J;
 
   // ZF = 1, CF = 1
-  memcpy(ucode[FLAGS_Z1C1], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
+  memcpy_P(ucode[FLAGS_Z1C1], UCODE_TEMPLATE, sizeof(UCODE_TEMPLATE));
   ucode[FLAGS_Z1C1][JC][2] = IO|J;
   ucode[FLAGS_Z1C1][JZ][2] = IO|J;
 }
@@ -189,4 +189,3 @@ void loop() {
   // put your main code here, to run repeatedly:
 
 }
-
